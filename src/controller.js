@@ -3,9 +3,17 @@ import { pimport { pool } from './database.js';
 class LibrosController {
 
 	async getAll(req, res) {
-		const [result] = await pool.query('SELECT * FROM Libros');
-		res.json(result);
-	}
+		// Intentará ejecutar el código dentro del bloque try y si se produce una excepción, se manejará en el bloque catch.
+    try {
+    	// Realizamos una consulta SQL para seleccionar todos los libros en la tabla "Libros", el resultado se almacena en la variable result.
+      const [result] = await pool.query('SELECT * FROM Libros');
+      // Respondemos con los resultados en formato JSON.
+      res.json(result); 
+    } catch (error) {
+    	// En caso de error, respondemos con un mensaje de error en formato JSON.
+      res.status(500).json({ error: 'Error al obtener los libros' }); 
+    }
+  }
 
 	async add(req, res) {
 		const libro = req.body;
