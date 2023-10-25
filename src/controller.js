@@ -16,10 +16,28 @@ class LibrosController {
   }
 
 	async add(req, res) {
-		const libro = req.body;
-		const [result] = await pool.query(`INSERT INTO libros(nombre, autor, categoria, \`año-publicacion\`, ISBN) VALUES (?,?,?,?,?)`, [libro.nombre, libro.autor, libro.categoria, libro['año-publicacion'], libro.ISBN]);
-		res.json({"Id insertado": result.insertId});
-	}
+	   const libro = req.body;
+
+		// Verificamos si el libro recibido contiene al menos un nombre, un autor y un ISBN.
+    if (!libro.nombre || !libro.autor || !libro.ISBN) {
+    // Si falta alguno de estos campos, respondemos con un mensaje de error.
+    res.status(400).json({ error: 'Nombre, autor e ISBN son campos obligatorios.' });
+    return;
+  }
+  // Construimos una consulta SQL de inserción con los valores correspondientes.
+   const query = `INSERT INTO libros(nombre, autor, categoria, \`año-publicacion\`, ISBN) VALUES (?,?,?,?,?)`;
+   const values = [libro.nombre, libro.autor, libro.categoria || null, libro['año-publicacion'] || null, libro.ISBN]; 
+   //Se construye una consulta SQL de inserción con los valores correspondientes y se ejecuta.
+   try {
+   	// Ejecutamos la consulta y obtenemos el resultado.
+    const [result] = await pool.query(query, values);
+     // El resultado de la consulta se almacena en result, respondemos con el "Id" del libro insertado.
+    res.json({ "Id insertado": result.insertId });
+  } catch (error) {
+  	// En caso de error durante el proceso, respondemos con un mensaje de error en formato JSON.
+    res.status(500).json({ error: 'Error al agregar el libro' });
+  }
+}
 
 	async delete(req, res) {
    const libro = req.body;
