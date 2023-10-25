@@ -1,4 +1,4 @@
-import { pool } from './database.js';
+import { pimport { pool } from './database.js';
 
 class LibrosController {
 
@@ -14,10 +14,35 @@ class LibrosController {
 	}
 
 	async delete(req, res) {
-		const libro = req.body;
-		const [result] = await pool.query(`DELETE FROM Libros WHERE id=(?)`, [libro.id]);
-		res.json({"Registros eliminados": result.affectedRows});
-	}
+   const libro = req.body;
+   // Verificar si se proporcionó el campo "ISBN" en la solicitud.
+   if (!libro.ISBN) {
+      res.status(400).json({ error: 'El campo "ISBN" es obligatorio para eliminar un libro.' });
+      return;
+    }
+  // Verificar si el libro existe en la base de datos.
+  try {
+    const [result] = await pool.query('SELECT * FROM Libros WHERE ISBN = ?', [libro.ISBN]);
+    if (result.length === 0) {
+      res.status(404).json({ error: 'Libro no encontrado' });
+      return;
+    }
+    // Si el libro existe, se procede a construir la consulta SQL para eliminarlo.
+    const deleteQuery = `DELETE FROM Libros WHERE ISBN = ?`;
+
+      // Intentar ejecutar la consulta para eliminar el libro.
+      try {
+        const [deleteResult] = await pool.query(deleteQuery, [libro.ISBN]);
+        res.json({ "Registros eliminados": deleteResult.affectedRows });
+        // Manejar errores durante la eliminación y responder con un mensaje de error.
+      } catch (deleteError) {
+        res.status(500).json({ error: 'Error al eliminar el libro' });
+      }
+      // Manejar errores al verificar la existencia del libro y responder con un mensaje de error.
+    } catch (error) {
+      res.status(500).json({ error: 'Error al verificar la existencia del libro' });
+    }
+  }
 
 	async update(req, res) {
 		const libro = req.body;
