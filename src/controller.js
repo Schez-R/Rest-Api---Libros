@@ -2,6 +2,7 @@ import { pimport { pool } from './database.js';
 
 class LibrosController {
 
+// Este método se utiliza para obtener todos los libros de la base de datos.
 	async getAll(req, res) {
 		// Intentará ejecutar el código dentro del bloque try y si se produce una excepción, se manejará en el bloque catch.
     try {
@@ -15,6 +16,7 @@ class LibrosController {
     }
   }
 
+// Este método se utiliza para agregar un libro.
 	async add(req, res) {
 	   const libro = req.body;
 
@@ -39,6 +41,7 @@ class LibrosController {
   }
 }
 
+// Este método se utiliza para eliminar un libro por su ISBN.
 	async delete(req, res) {
    const libro = req.body;
    // Verificar si se proporcionó el campo "ISBN" en la solicitud.
@@ -70,25 +73,57 @@ class LibrosController {
     }
   }
 
+// Este método se utiliza para actualizar un libro.
 	async update(req, res) {
-		const libro = req.body;
-		const [result] = await pool.query(`UPDATE Libros SET nombre=?, autor=?, categoria=?, \`año-publicacion\`=?,ISBN=? WHERE id=?`, [libro.nombre, libro.autor, libro.categoria, libro['año-publicacion'], libro.ISBN, libro.id]);
-		res.json({"Registros actualizados": result.changedRows});
-	}
-
-	async getOne(req, res) {
-		const libroId = req.params.id; // Obtener el ID del parámetro de la URL
-	try {
-    	const [result] = await pool.query('SELECT * FROM Libros WHERE id = ?', [libroId]);
-    if (result.length === 1) {
-      res.json(result[0]); // Responder con el libro encontrado
-    } else {
-      res.status(404).json({ error: 'Libro no encontrado con esa id' }); // Responder libro no encontrado
+	 // Obtener los datos del libro desde la solicitud.
+   const libro = req.body;
+  try {
+  	// Verificar si los campos obligatorios (id, nombre, autor e ISBN) están presentes.
+    if (!libro.id || !libro.nombre || !libro.autor || !libro.ISBN) {
+      res.status(400).json({ error: 'Los campos "id", "nombre", "autor" e "ISBN" son obligatorios.' });
+      return;
     }
+    // Realizar una consulta SQL para actualizar el libro en la base de datos.
+    const [result] = await pool.query(
+      `UPDATE Libros SET nombre=?, autor=?, categoria=?, \`año-publicacion\`=?, ISBN=? WHERE id=?`,
+      [libro.nombre, libro.autor, libro.categoria, libro['año-publicacion'], libro.ISBN, libro.id]
+    );
+    // Verificar si se actualizó al menos un registro en la base de datos.
+    if (result.affectedRows > 0) {
+      res.json({ "Registros actualizados": result.changedRows });
+    } else {
+      res.status(404).json({ error: 'No se encontró un libro con el ID proporcionado' });
+    }
+    // En caso de un error durante el proceso, responder con un mensaje de error en formato JSON y detalles del error.
   } catch (error) {
-      res.status(500).json({ error: 'Error al obtener el libro' });
+    res.status(500).json({ error: 'Error al actualizar el libro', details: error.message });
   }
-}
+ }
 
-}
+// Este método se utiliza para obtener un libro por su ID.
+  async getOne(req, res) {
+	// Obtener el ID del libro desde los parámetros de la URL.
+  const libroId = req.params.id;
+
+  try {
+    // Verificar si el ID es proporcionado en la solicitud.
+    if (!libroId) {
+      res.status(400).json({ error: 'El parámetro de ID es obligatorio' });
+      return;
+    }
+    // Realizar una consulta SQL para seleccionar el libro con el ID correspondiente.
+    const [result] = await pool.query('SELECT * FROM Libros WHERE id = ?', [libroId]);
+    // Verificar si se encontró exactamente un libro
+     if (result.length === 1) {
+       res.json(result[0]); // Responder con el libro encontrado en formato JSON.
+     } else {
+      res.status(404).json({ error: 'Libro no encontrado con ese ID' }); // Responder libro no encontrado.
+     }
+   } catch (error) {
+  	// En caso de error durante el proceso, responder con un mensaje de error en formato JSON y detalles del error.
+     res.status(500).json({ error: 'Error al obtener el libro', details: error.message });
+   }
+ }
+ }
+ 
 export const libro = new LibrosController();
