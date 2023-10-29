@@ -13,7 +13,7 @@ router.get('/libros/:id', libro.getOne);
 router.post('/libros', libro.add);
 
 // Ruta para eliminar un libro por ID
-router.delete('/libros/:id', libro.delete);
+router.delete('/libros/:isbn', libro.delete);
 
 // Ruta para actualizar un libro por ID
 router.put('/libros/:id', libro.update);

@@ -1,4 +1,4 @@
-import { pimport { pool } from './database.js';
+import { pool } from './database.js';
 
 class LibrosController {
 
@@ -42,36 +42,35 @@ class LibrosController {
 }
 
 // Este método se utiliza para eliminar un libro por su ISBN.
-	async delete(req, res) {
-   const libro = req.body;
-   // Verificar si se proporcionó el campo "ISBN" en la solicitud.
-   if (!libro.ISBN) {
-      res.status(400).json({ error: 'El campo "ISBN" es obligatorio para eliminar un libro.' });
-      return;
-    }
-  // Verificar si el libro existe en la base de datos.
+async delete(req, res) {
+  const isbn = req.params.isbn; // Obtener el ISBN desde los parámetros de la URL
+
+  if (!isbn) {
+    res.status(400).json({ error: 'El campo "ISBN" es obligatorio para eliminar un libro.' });
+    return;
+  }
+
   try {
-    const [result] = await pool.query('SELECT * FROM Libros WHERE ISBN = ?', [libro.ISBN]);
+    // Verificar si el libro existe en la base de datos.
+    const [result] = await pool.query('SELECT * FROM Libros WHERE ISBN = ?', [isbn]);
+
     if (result.length === 0) {
       res.status(404).json({ error: 'Libro no encontrado' });
       return;
     }
-    // Si el libro existe, se procede a construir la consulta SQL para eliminarlo.
+
     const deleteQuery = `DELETE FROM Libros WHERE ISBN = ?`;
 
-      // Intentar ejecutar la consulta para eliminar el libro.
-      try {
-        const [deleteResult] = await pool.query(deleteQuery, [libro.ISBN]);
-        res.json({ "Registros eliminados": deleteResult.affectedRows });
-        // Manejar errores durante la eliminación y responder con un mensaje de error.
-      } catch (deleteError) {
-        res.status(500).json({ error: 'Error al eliminar el libro' });
-      }
-      // Manejar errores al verificar la existencia del libro y responder con un mensaje de error.
-    } catch (error) {
-      res.status(500).json({ error: 'Error al verificar la existencia del libro' });
+    try {
+      const [deleteResult] = await pool.query(deleteQuery, [isbn]);
+      res.json({ "Registros eliminados": deleteResult.affectedRows });
+    } catch (deleteError) {
+      res.status(500).json({ error: 'Error al eliminar el libro' });
     }
+  } catch (error) {
+    res.status(500).json({ error: 'Error al verificar la existencia del libro' });
   }
+}
 
 // Este método se utiliza para actualizar un libro.
 	async update(req, res) {
